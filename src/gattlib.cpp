@@ -16,20 +16,16 @@
 
 #include "gattlib.h"
 
-class PyThreadsGuard {
-public:
-    PyThreadsGuard() : _save(NULL) {
-        _save = PyEval_SaveThread();
-    };
+#define DELAY 0.05
 
-    ~PyThreadsGuard() {
-        PyEval_RestoreThread(_save);
-    };
+class PyGILGuard {
+public:
+    PyGILGuard() { _state = PyGILState_Ensure(); }
+    ~PyGILGuard() { PyGILState_Release(_state); }
 
 private:
-    PyThreadState* _save;
+    PyGILState_STATE _state;
 };
-
 
 IOService::IOService(bool run) {
     if (run)
@@ -155,6 +151,8 @@ GATTRequester::on_indication(const uint16_t handle, const std::string data) {
 
 void
 events_handler(const uint8_t* data, uint16_t size, gpointer userp) {
+    PyGILGuard guard;
+
     GATTRequester* request = (GATTRequester*)userp;
     uint16_t handle = htobs(bt_get_le16(&data[1]));
 
@@ -240,6 +238,8 @@ GATTRequester::connect(bool wait,
          connect_cb,
          &gerr,
          (gpointer)this);
+
+    usleep(500000);
 
     if (_channel == NULL) {
         _state = STATE_DISCONNECTED;
@@ -363,7 +363,6 @@ GATTRequester::read_by_handle(uint16_t handle) {
 static void
 read_by_uuid_cb(guint8 status, const guint8* data,
         guint16 size, gpointer userp) {
-
     GATTResponse* response = (GATTResponse*)userp;
     if (status || !data) {
         response->notify(status);
@@ -392,6 +391,8 @@ read_by_uuid_cb(guint8 status, const guint8* data,
 
 void
 GATTRequester::read_by_uuid_async(std::string uuid, GATTResponse* response) {
+    PyGILGuard guard;
+
     uint16_t start = 0x0001;
     uint16_t end = 0xffff;
     bt_uuid_t btuuid;
@@ -407,7 +408,6 @@ GATTRequester::read_by_uuid_async(std::string uuid, GATTResponse* response) {
 
 boost::python::list
 GATTRequester::read_by_uuid(std::string uuid) {
-    PyThreadsGuard guard;
     GATTResponse response;
 
     read_by_uuid_async(uuid, &response);
@@ -433,6 +433,7 @@ write_by_handle_cb(guint8 status, const guint8* data,
 void
 GATTRequester::write_by_handle_async(uint16_t handle, std::string data,
                                      GATTResponse* response) {
+    PyGILGuard guard;
     check_channel();
     gatt_write_char(_attrib, handle, (const uint8_t*)data.data(), data.size(),
                     write_by_handle_cb, (gpointer)response);
@@ -440,7 +441,7 @@ GATTRequester::write_by_handle_async(uint16_t handle, std::string data,
 
 boost::python::list
 GATTRequester::write_by_handle(uint16_t handle, std::string data) {
-    PyThreadsGuard guard;
+    usleep(DELAY * 1000000);
     GATTResponse response;
 
     write_by_handle_async(handle, data, &response);
@@ -455,6 +456,8 @@ GATTRequester::write_by_handle(uint16_t handle, std::string data) {
 
 void
 GATTRequester::write_cmd_by_handle(uint16_t handle, std::string data) {
+    usleep(DELAY * 1000000);
+    PyGILGuard guard;
     check_channel();
     gatt_write_cmd(_attrib, handle, (const uint8_t*)data.data(), data.size(),
 		   NULL, NULL);
@@ -516,6 +519,7 @@ discover_primary_cb(guint8 status, GSList *services, void *userp) {
 
 void
 GATTRequester::discover_primary_async(GATTResponse* response) {
+    PyGILGuard guard;
     check_connected();
     if( not gatt_discover_primary(
             _attrib, NULL, discover_primary_cb, (gpointer)response)) {
@@ -524,7 +528,7 @@ GATTRequester::discover_primary_async(GATTResponse* response) {
 }
 
 boost::python::list GATTRequester::discover_primary() {
-    PyThreadsGuard guard;
+    usleep(DELAY * 1000000);
 	GATTResponse response;
 	discover_primary_async(&response);
 
@@ -562,6 +566,7 @@ static void discover_char_cb(guint8 status, GSList *characteristics,
 
 void GATTRequester::discover_characteristics_async(GATTResponse* response,
         int start, int end, std::string uuid_str) {
+    PyGILGuard guard;
     check_connected();
 
     if (uuid_str.size() == 0) {
@@ -581,7 +586,8 @@ void GATTRequester::discover_characteristics_async(GATTResponse* response,
 
 boost::python::list GATTRequester::discover_characteristics(int start, int end,
         std::string uuid_str) {
-    PyThreadsGuard guard;
+    usleep(DELAY * 1000000);
+
     GATTResponse response;
     discover_characteristics_async(&response, start, end, uuid_str);
 
