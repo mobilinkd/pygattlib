@@ -50,7 +50,7 @@ else:
 
 setup(
     name='gattlib',
-    version="0.20160216",
+    version="0.20171001",
     description="Library to access Bluetooth LE devices",
     author="Oscar Acena",
     author_email="oscar.acena@gmail.com",

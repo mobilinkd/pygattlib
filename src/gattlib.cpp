@@ -454,6 +454,13 @@ GATTRequester::write_by_handle(uint16_t handle, std::string data) {
 }
 
 void
+GATTRequester::write_cmd_by_handle(uint16_t handle, std::string data) {
+    check_channel();
+    gatt_write_cmd(_attrib, handle, (const uint8_t*)data.data(), data.size(),
+		   NULL, NULL);
+}
+
+void
 GATTRequester::check_channel() {
     time_t ts = time(NULL);
     bool should_update = false;

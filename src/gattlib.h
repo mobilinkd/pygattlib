@@ -69,8 +69,10 @@ public:
 	boost::python::list read_by_handle(uint16_t handle);
 	void read_by_uuid_async(std::string uuid, GATTResponse* response);
 	boost::python::list read_by_uuid(std::string uuid);
+
 	void write_by_handle_async(uint16_t handle, std::string data, GATTResponse* response);
     boost::python::list write_by_handle(uint16_t handle, std::string data);
+    void write_cmd_by_handle(uint16_t handle, std::string data);
 
 	friend void connect_cb(GIOChannel*, GError*, gpointer);
 	friend gboolean disconnect_cb(GIOChannel* channel, GIOCondition cond, gpointer userp);
