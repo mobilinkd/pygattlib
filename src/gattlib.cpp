@@ -441,7 +441,6 @@ GATTRequester::write_by_handle_async(uint16_t handle, std::string data,
 
 boost::python::list
 GATTRequester::write_by_handle(uint16_t handle, std::string data) {
-    usleep(DELAY * 1000000);
     GATTResponse response;
 
     write_by_handle_async(handle, data, &response);
@@ -456,8 +455,6 @@ GATTRequester::write_by_handle(uint16_t handle, std::string data) {
 
 void
 GATTRequester::write_cmd_by_handle(uint16_t handle, std::string data) {
-    usleep(DELAY * 1000000);
-    PyGILGuard guard;
     check_channel();
     gatt_write_cmd(_attrib, handle, (const uint8_t*)data.data(), data.size(),
 		   NULL, NULL);
