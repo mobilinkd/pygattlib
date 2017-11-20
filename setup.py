@@ -19,7 +19,7 @@ if sys.platform.startswith('linux'):
     glib_libs = [x.strip() for x in glib_libs if x]
 
     if sys.version_info.major == 3:
-        boost_libs = ["boost_python-py34"]
+        boost_libs = ["boost_python-py3" + str(sys.version_info.minor)]
     else:
         boost_libs = ["boost_python"]
     extension_modules = [
@@ -50,7 +50,7 @@ else:
 
 setup(
     name='gattlib',
-    version="0.20171002",
+    version="0.20171119",
     description="Library to access Bluetooth LE devices",
     author="Oscar Acena",
     author_email="oscar.acena@gmail.com",
