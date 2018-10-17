@@ -50,6 +50,7 @@ private:
 };
 
 void connect_cb(GIOChannel* channel, GError* err, gpointer user_data);
+void exchange_mtu_cb(guint8, const guint8*, guint16, gpointer);
 
 class GATTRequester {
 public:
@@ -65,12 +66,12 @@ public:
 	static boost::python::object connect_kwarg(boost::python::tuple args, boost::python::dict kwargs);
 	bool is_connected();
 	void disconnect();
-	void read_by_handle_async(uint16_t handle, GATTResponse* response);
+	guint read_by_handle_async(uint16_t handle, GATTResponse* response);
 	boost::python::list read_by_handle(uint16_t handle);
-	void read_by_uuid_async(std::string uuid, GATTResponse* response);
+	guint read_by_uuid_async(std::string uuid, GATTResponse* response);
 	boost::python::list read_by_uuid(std::string uuid);
 
-	void write_by_handle_async(uint16_t handle, std::string data, GATTResponse* response);
+	guint write_by_handle_async(uint16_t handle, std::string data, GATTResponse* response);
     boost::python::list write_by_handle(uint16_t handle, std::string data);
     void write_cmd_by_handle(uint16_t handle, std::string data);
 
@@ -78,10 +79,14 @@ public:
 	friend gboolean disconnect_cb(GIOChannel* channel, GIOCondition cond, gpointer userp);
 	friend void events_handler(const uint8_t* data, uint16_t size, gpointer userp);
 
+	friend void exchange_mtu_cb(guint8, const guint8*, guint16, gpointer);
+	int exchange_mtu(int mtu);
+	int mtu() const;
+
 	boost::python::list discover_primary();
-	void discover_primary_async(GATTResponse* response);
+	guint discover_primary_async(GATTResponse* response);
 	boost::python::list discover_characteristics(int start = 0x0001, int end = 0xffff, std::string uuid = "");
-	void discover_characteristics_async(GATTResponse* response, int start = 0x0001, int end = 0xffff, std::string uuid = "");
+	guint discover_characteristics_async(GATTResponse* response, int start = 0x0001, int end = 0xffff, std::string uuid = "");
 private:
 	void check_channel();
 	void check_connected();
@@ -95,9 +100,12 @@ private:
 
 	std::string _device;
 	std::string _address;
-	int _hci_socket;
-	GIOChannel* _channel;
-	GAttrib* _attrib;
+	int _hci_socket{-1};
+	GIOChannel* _channel{nullptr};
+	GAttrib* _attrib{nullptr};
+	int _mtu{ATT_DEFAULT_LE_MTU};
+	guint _notify_id{0};
+	guint _indicate_id{0};
 };
 
 #endif // _MIBANDA_GATTLIB_H_

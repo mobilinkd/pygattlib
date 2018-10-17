@@ -137,6 +137,8 @@ BOOST_PYTHON_MODULE(gattlib) {
         .def("write_cmd_by_handle", &GATTRequester::write_cmd_by_handle)
         .def("on_notification", &GATTRequesterCb::default_on_notification)
         .def("on_indication", &GATTRequesterCb::default_on_indication)
+        .def("exchange_mtu", &GATTRequester::exchange_mtu)
+        .def("mtu", &GATTRequester::mtu)
         .def("discover_primary", &GATTRequester::discover_primary,
                 "returns a list with of primary services,"
                 " with their handles and UUIDs.")
